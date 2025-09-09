@@ -1,5 +1,5 @@
 /*!
-The Picross puzzle board type and its implementation.
+Types to create and solve puzzles
 
 This module defines how code can interact with a picross puzzle.
 */
