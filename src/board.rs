@@ -65,6 +65,16 @@ impl Board {
         });
     }
 
+    /// returns the board's width
+    pub fn get_width(&self) -> u8 {
+        self.width
+    }
+
+    /// calculates and returns the board's height
+    pub fn get_height(&self) -> u8 {
+        (self.total / self.width as usize) as u8
+    }
+
     /// Sets the selected tile's state to the given one.
     /// Also toggles the tile's value if it can change the state
     fn set_state(&mut self, x: u8, y: u8, new_state: TileState) -> Result<(), BoardError> {
