@@ -5,6 +5,7 @@ This module defines how code can interact with a picross puzzle.
 */
 
 use crate::board::error::BoardError;
+use crate::utils::*;
 
 const BOARD_MIN: usize = 25;
 
@@ -43,7 +44,8 @@ pub struct Board {
 
 impl Board {
     fn valid_coord(&self, x: u8, y: u8) -> bool {
-        x < self.width && (y as usize) < (self.total / (self.width as usize))
+        in_range(&x, 0, self.width)
+            && in_range(&(y as usize), 0, self.total / (self.width as usize))
     }
 
     /**
