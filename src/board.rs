@@ -4,6 +4,7 @@ Types to create and solve puzzles
 This module defines how code can interact with a picross puzzle.
 */
 
+use crate::binmat::BinMat;
 use crate::board::error::BoardError;
 use crate::utils::*;
 
@@ -49,9 +50,9 @@ impl Board {
     }
 
     /**
-    The new method returns a new `Board` containing data for the number of
-    tiles requested, which corresponds to `w` * `h`.
-    It may return `None` if the amount is too small (<25)
+    Returns a new empty `Board`
+
+    It may return an error if the amount is too small (<25)
     */
     pub fn new(w: u8, h: u8) -> Result<Self, BoardError> {
         let total: usize = (w * h) as usize;
@@ -64,6 +65,25 @@ impl Board {
             total: total,
             tile_states: vec![TileState::Normal; total],
             tile_values: vec![false; total],
+        });
+    }
+
+    /**
+    Returns a new `Board` initialized from a binary matrix
+
+    Returns an error if the matrix is too small.
+    */
+    pub fn from_mat(mat: &BinMat) -> Result<Self, BoardError> {
+        let total: usize = (mat.get_width() * mat.get_height()) as usize;
+        if total < BOARD_MIN {
+            return Err(BoardError::BoardIsTooSmall);
+        }
+
+        return Ok(Board {
+            width: mat.get_width(),
+            total: total,
+            tile_states: vec![TileState::Normal; total],
+            tile_values: mat.get_mat(),
         });
     }
 
@@ -173,6 +193,22 @@ mod tests {
         assert!(!board.is_err());
         assert!(noboard.is_err());
         assert_eq!(noboard.err(), Some(BoardError::BoardIsTooSmall));
+    }
+
+    #[test]
+    fn test_create_from_binmat() {
+        let mut mat = BinMat::new(5, 5);
+
+        // preparing mat
+        mat.toggle_val(0, 0).expect("Not the subject of this test");
+
+        let board = Board::from_mat(&mat);
+
+        // is it created correctly?
+        assert!(board.is_ok());
+
+        // is the value correctly initialized?
+        assert_eq!(board.unwrap().tile_values[0], true);
     }
 
     #[test]
