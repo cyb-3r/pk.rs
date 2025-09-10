@@ -1,2 +1,3 @@
+pub mod binmat;
 pub mod board;
-pub mod utils;
+mod utils;
