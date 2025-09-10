@@ -54,9 +54,7 @@ impl BinMat {
 
         Ok(self.values[(x + y * self.width) as usize])
     }
-}
 
-impl BinMat {
     /// Extracts a reference of one of the matrix's rows
     /// May return an error if the given row is out of range.
     pub fn extract_row(&self, row: u8) -> Result<&[bool], BinMatError> {
