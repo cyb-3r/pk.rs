@@ -72,12 +72,21 @@ impl BinMat {
         Ok(self.values[(x + y * self.width) as usize])
     }
 
-    /// Extracts a reference of one of the matrix's rows
+    /// Extracts an iterator going over one of the matrix's rows
     /// May return an error if the given row is out of range.
-    pub fn extract_row(&self, row: u8) -> Result<&[bool], BinMatError> {
+    pub fn extract_row(&self, row: u8) -> Result<impl Iterator<Item = &bool>, BinMatError> {
         if in_range(&row, 0, self.height) {
-            let id = (row * self.width) as usize;
-            Ok(&self.values[id..id + self.width as usize])
+            Ok((0..self.width).map(move |col| &self.values[(row * self.width + col) as usize]))
+        } else {
+            Err(BinMatError::OutOfBounds)
+        }
+    }
+
+    /// Extracts an iterator going over one of the matrix's columns
+    /// May return an error if the given col is out of range.
+    pub fn extract_col(&self, col: u8) -> Result<impl Iterator<Item = &bool>, BinMatError> {
+        if in_range(&col, 0, self.width) {
+            Ok((0..self.height).map(move |row| &self.values[(row * self.width + col) as usize]))
         } else {
             Err(BinMatError::OutOfBounds)
         }
@@ -145,16 +154,29 @@ mod tests {
     }
 
     #[test]
-    fn test_extract_row() {
+    fn test_extract() {
         const SIZE: u8 = 3;
-        let mat = BinMat::new(SIZE, SIZE);
+        let mut mat = BinMat::new(SIZE, SIZE);
+
+        // preparing some data
+        mat.values[4] ^= true;
+        mat.values[5] ^= true;
 
         // is the extracted ref valid?
-        let extract = mat.extract_row(2);
-        assert!(extract.is_ok());
-        assert_eq!(extract.unwrap(), &[false; SIZE as usize]);
 
-        // the next extract should fail
+        // row
+        let extract = mat.extract_row(1);
+        assert!(extract.is_ok());
+        let extract: Vec<&bool> = extract.unwrap().collect();
+        assert_eq!(extract, vec![&false, &true, &true]);
+
+        // col
+        let extract = mat.extract_col(1);
+        assert!(extract.is_ok());
+        let extract: Vec<&bool> = extract.unwrap().collect();
+        assert_eq!(extract, vec![&false, &true, &false]);
+
+        // the following extract should fail
         let extract = mat.extract_row(3);
         assert!(extract.is_err());
     }
