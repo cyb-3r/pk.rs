@@ -1,5 +1,7 @@
 # build dir
 /target
 
-# other
+# IDE specific files
 *.sublime-*
+.zed
+.vscode
