@@ -24,6 +24,23 @@ pub struct BinMat {
 }
 
 impl BinMat {
+    /// Returns the matrix's width
+    pub fn get_width(&self) -> u8 {
+        self.width
+    }
+
+    /// Returns the matrix's height
+    pub fn get_height(&self) -> u8 {
+        self.height
+    }
+
+    /// Returns a clone of the matrix's values
+    pub fn get_mat(&self) -> Vec<bool> {
+        self.values.clone()
+    }
+}
+
+impl BinMat {
     /// Creates a new binary matrix
     pub fn new(w: u8, h: u8) -> Self {
         BinMat {
