@@ -23,13 +23,14 @@ But right now, you can create a simple puzzle by doing this:
 use pkrs::*;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+  // load the solution pattern from a text file
   let mat = binmat::BinMat::from_file("path_to_mat.txt")?;
 
-  // the actual puzzle
+  // create the puzzle's components
   let board = board::Board::from_mat(&mat)?;
   let clues = clues::PuzzleClues::from_mat(&mat);
 
-  /* ... */
+  /* then do whatever you want with that */
 
   Ok(())
 }
