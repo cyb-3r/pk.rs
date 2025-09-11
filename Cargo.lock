@@ -3,5 +3,5 @@
 version = 4
 
 [[package]]
-name = "picross"
+name = "pkrs"
 version = "0.1.0"

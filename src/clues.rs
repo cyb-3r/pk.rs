@@ -16,7 +16,7 @@ the two groups that are not part of the solution.
 
 Example:
 ```
-use picross::clues::ClueSet;
+use pkrs::clues::ClueSet;
 
 let set: ClueSet = vec![1, 3, 2];
 
