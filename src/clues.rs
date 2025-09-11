@@ -29,26 +29,30 @@ pub type ClueSet = Vec<u8>;
 
 // TODO: simplify this function
 fn clueset_new<'a>(data: impl Iterator<Item = &'a bool>) -> ClueSet {
-    let mut new_set: ClueSet = Vec::new();
-    let mut cpt: u8 = 0;
+    let mut clues: ClueSet = Vec::new();
+    let mut count: u8 = 0;
 
     for val in data {
-        if !val {
-            if cpt > 0 {
-                new_set.push(cpt);
+        match val {
+            true => count += 1,
+            false => {
+                if count > 0 {
+                    clues.push(count);
+                    count = 0;
+                }
             }
-            cpt = 0;
-        } else {
-            cpt += 1;
         }
     }
-    if cpt > 0 {
-        new_set.push(cpt);
+
+    if count > 0 {
+        clues.push(count);
     }
-    if new_set.len() == 0 {
-        new_set.push(0);
+
+    if clues.len() == 0 {
+        vec![0]
+    } else {
+        clues
     }
-    new_set
 }
 
 /**
@@ -117,12 +121,12 @@ mod tests {
         });
 
         // row
-        assert_eq!(clues.get_row(0), Some(&vec![2 as u8, 1 as u8]));
+        assert_eq!(clues.get_row(0), Some(&vec![2u8, 1u8]));
         // should fail
         assert_eq!(clues.get_row(10), None);
 
         // col
-        assert_eq!(clues.get_col(0), Some(&vec![1 as u8]));
+        assert_eq!(clues.get_col(0), Some(&vec![1u8]));
         // should fail
         assert_eq!(clues.get_col(11), None);
     }
