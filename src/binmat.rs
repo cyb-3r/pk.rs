@@ -2,6 +2,7 @@
 
 use crate::binmat::error::BinMatError;
 use crate::utils::in_range;
+use std::fs;
 
 /**
 A matrix of bool values
@@ -52,6 +53,24 @@ impl BinMat {
         }
     }
 
+    /// Returns a binary matrix with initialized values
+    fn new_internal(w: u8, h: u8, values: Vec<bool>) -> Self {
+        let mut values = values;
+        let size = (w * h) as usize;
+
+        match values.len().cmp(&size) {
+            std::cmp::Ordering::Less => values.append(&mut vec![false; size - values.len()]),
+            std::cmp::Ordering::Greater => values.truncate(size),
+            std::cmp::Ordering::Equal => {}
+        };
+
+        BinMat {
+            width: w,
+            height: h,
+            values: values,
+        }
+    }
+
     /// Inverse a value located at the x and y coordinates of the matrix
     /// May return an error if the given coordinates are out of range.
     pub fn toggle_val(&mut self, x: u8, y: u8) -> Result<(), BinMatError> {
@@ -95,10 +114,74 @@ impl BinMat {
     }
 }
 
+// file interaction
+impl BinMat {
+    fn from_string(content: String) -> Result<Self, BinMatError> {
+        let (dimensions, data) = content
+            .split_once(':')
+            .ok_or(BinMatError::InvalidFileFormat)?;
+
+        let dims: Vec<u8> = dimensions
+            .split(',')
+            .filter_map(|s| s.parse().ok())
+            .collect();
+
+        match dims.as_slice() {
+            [w, h] => Ok(BinMat::new_internal(
+                *w,
+                *h,
+                data.chars().map(|c| c == '1').collect::<Vec<bool>>(),
+            )),
+            _ => Err(BinMatError::InvalidFileFormat),
+        }
+    }
+    /**
+    Loads a binary matrix from a file
+
+    The expected file format should be the following: `w,h:[0|1]`
+    alternatively `[0-9]{,2},[0-9]{,2}:[01]+` if you get regex.
+
+    For instance this is valid: `2,2:0110`
+    */
+    pub fn from_file(path_str: &str) -> Result<Self, BinMatError> {
+        let content = fs::read_to_string(path_str).map_err(|_| BinMatError::FileNotFound)?;
+        Self::from_string(content)
+    }
+
+    /// Formats a binary matrix to store it into a file
+    fn format(&self) -> String {
+        format!(
+            "{},{}:{}",
+            self.width,
+            self.height,
+            self.values
+                .iter()
+                .map(|&b| if b { '1' } else { '0' })
+                .collect::<String>()
+        )
+    }
+
+    /**
+    Writes a binary matrix to a file, creates the file if it doesn't exist
+    */
+    pub fn to_file(&self, path: &str) -> Result<(), BinMatError> {
+        std::fs::write(path, self.format()).map_err(|_| BinMatError::FileWriteError)
+    }
+}
+
+impl std::fmt::Display for BinMat {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        write!(f, "{}", self.format())
+    }
+}
+
 mod error {
     #[derive(Debug, PartialEq, Eq)]
     pub enum BinMatError {
         OutOfBounds,
+        InvalidFileFormat,
+        FileNotFound,
+        FileWriteError,
     }
 
     impl std::fmt::Display for BinMatError {
@@ -106,6 +189,15 @@ mod error {
             match self {
                 BinMatError::OutOfBounds => {
                     write!(f, "Coordinates are out of bounds")
+                }
+                BinMatError::InvalidFileFormat => {
+                    write!(f, "Binary matrix format is invalid")
+                }
+                BinMatError::FileNotFound => {
+                    write!(f, "Binary matrix file was not found")
+                }
+                BinMatError::FileWriteError => {
+                    write!(f, "Binary matrix could not be written to file")
                 }
             }
         }
@@ -181,5 +273,38 @@ mod tests {
         // the following extract should fail
         let extract = mat.row_iter(3);
         assert!(extract.is_err());
+    }
+
+    #[test]
+    fn test_file() {
+        // do we get the original pattern from loading a mat from that pattern?
+        const PATTERN: &str = "3,3:101111000";
+        assert_eq!(
+            BinMat::from_string(String::from(PATTERN))
+                .expect("An error occured")
+                .format(),
+            String::from(PATTERN)
+        );
+
+        // should return an error if format constraint is not satisfied
+        assert!(BinMat::from_string(String::from("huihihihi")).is_err());
+        // pretty funny but should not be done in practice (I hope so)
+        assert!(BinMat::from_string(String::from("0,0:")).is_ok());
+        // does it add missing values?
+        assert_eq!(
+            BinMat::from_string(String::from("2,2:011"))
+                .expect("oops")
+                .values
+                .len(),
+            4usize
+        );
+        // does it truncate excess values?
+        assert_eq!(
+            BinMat::from_string(String::from("2,2:01111"))
+                .expect("oops")
+                .values
+                .len(),
+            4usize
+        );
     }
 }
