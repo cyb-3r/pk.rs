@@ -1,7 +1,7 @@
 //! Binary matrix type
 
 use crate::binmat::error::BinMatError;
-use crate::utils::*;
+use crate::utils::in_range;
 
 /**
 A matrix of bool values
@@ -23,6 +23,7 @@ pub struct BinMat {
     values: Vec<bool>,
 }
 
+// getters
 impl BinMat {
     /// Returns the matrix's width
     pub fn get_width(&self) -> u8 {
@@ -40,6 +41,7 @@ impl BinMat {
     }
 }
 
+// general implementation
 impl BinMat {
     /// Creates a new binary matrix
     pub fn new(w: u8, h: u8) -> Self {
@@ -74,7 +76,7 @@ impl BinMat {
 
     /// Extracts an iterator going over one of the matrix's rows
     /// May return an error if the given row is out of range.
-    pub fn extract_row(&self, row: u8) -> Result<impl Iterator<Item = &bool>, BinMatError> {
+    pub fn row_iter(&self, row: u8) -> Result<impl Iterator<Item = &bool>, BinMatError> {
         if in_range(&row, 0, self.height) {
             Ok((0..self.width).map(move |col| &self.values[(row * self.width + col) as usize]))
         } else {
@@ -84,7 +86,7 @@ impl BinMat {
 
     /// Extracts an iterator going over one of the matrix's columns
     /// May return an error if the given col is out of range.
-    pub fn extract_col(&self, col: u8) -> Result<impl Iterator<Item = &bool>, BinMatError> {
+    pub fn col_iter(&self, col: u8) -> Result<impl Iterator<Item = &bool>, BinMatError> {
         if in_range(&col, 0, self.width) {
             Ok((0..self.height).map(move |row| &self.values[(row * self.width + col) as usize]))
         } else {
@@ -165,19 +167,19 @@ mod tests {
         // is the extracted ref valid?
 
         // row
-        let extract = mat.extract_row(1);
+        let extract = mat.row_iter(1);
         assert!(extract.is_ok());
         let extract: Vec<&bool> = extract.unwrap().collect();
         assert_eq!(extract, vec![&false, &true, &true]);
 
         // col
-        let extract = mat.extract_col(1);
+        let extract = mat.col_iter(1);
         assert!(extract.is_ok());
         let extract: Vec<&bool> = extract.unwrap().collect();
         assert_eq!(extract, vec![&false, &true, &false]);
 
         // the following extract should fail
-        let extract = mat.extract_row(3);
+        let extract = mat.row_iter(3);
         assert!(extract.is_err());
     }
 }

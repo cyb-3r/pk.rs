@@ -6,7 +6,7 @@ This module defines how code can interact with a picross puzzle.
 
 use crate::binmat::BinMat;
 use crate::board::error::BoardError;
-use crate::utils::*;
+use crate::utils::in_range;
 
 const BOARD_MIN: usize = 25;
 
@@ -43,12 +43,17 @@ pub struct Board {
     tile_values: Vec<bool>,
 }
 
+// private
 impl Board {
+    /// Checks if given coords are in range
     fn valid_coord(&self, x: u8, y: u8) -> bool {
         in_range(&x, 0, self.width)
             && in_range(&(y as usize), 0, self.total / (self.width as usize))
     }
+}
 
+// general implementation
+impl Board {
     /**
     Returns a new empty `Board`
 
@@ -97,6 +102,31 @@ impl Board {
         (self.total / self.width as usize) as u8
     }
 
+    /// Returns a clone of the tile state vector
+    pub fn get_states(&self) -> Vec<TileState> {
+        self.tile_states.clone()
+    }
+
+    /// Returns a clone of the one tile's state
+    pub fn get_state(&self, x: u8, y: u8) -> Result<TileState, BoardError> {
+        if self.valid_coord(x, y) {
+            Ok(self.tile_states[(x + y * self.width) as usize])
+        } else {
+            Err(BoardError::OutOfBounds {
+                max: self.total,
+                val: (x + y * self.width) as usize,
+            })
+        }
+    }
+
+    /// This function returns `true` if every value are false
+    pub fn is_solved(&self) -> bool {
+        !self.tile_values.iter().any(|&x| x)
+    }
+}
+
+// changing state
+impl Board {
     /// Sets the selected tile's state to the given one.
     /// Also toggles the tile's value if it can change the state
     fn set_state(&mut self, x: u8, y: u8, new_state: TileState) -> Result<(), BoardError> {
@@ -128,31 +158,8 @@ impl Board {
     pub fn pick_tile(&mut self, x: u8, y: u8) -> Result<(), BoardError> {
         self.set_state(x, y, TileState::Picked)
     }
-
-    /// Returns a clone of the tile state vector
-    pub fn get_states(&self) -> Vec<TileState> {
-        self.tile_states.clone()
-    }
-
-    /// Returns a clone of the one tile's state
-    pub fn get_state(&self, x: u8, y: u8) -> Result<TileState, BoardError> {
-        if self.valid_coord(x, y) {
-            Ok(self.tile_states[(x + y * self.width) as usize])
-        } else {
-            Err(BoardError::OutOfBounds {
-                max: self.total,
-                val: (x + y * self.width) as usize,
-            })
-        }
-    }
-
-    /// This function returns `true` if every value are false
-    pub fn is_solved(&self) -> bool {
-        !self.tile_values.iter().any(|&x| x)
-    }
 }
 
-/// WIP unused for now
 mod error {
     #[derive(Debug, PartialEq, Eq)]
     pub enum BoardError {
