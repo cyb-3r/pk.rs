@@ -5,3 +5,7 @@
 *.sublime-*
 .zed
 .vscode
+
+# other files
+.*
+!.gitignore
