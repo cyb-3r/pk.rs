@@ -65,12 +65,12 @@ impl Board {
             return Err(BoardError::BoardIsTooSmall);
         }
 
-        return Ok(Board {
+        Ok(Board {
             width: w,
-            total: total,
+            total,
             tile_states: vec![TileState::Normal; total],
             tile_values: vec![false; total],
-        });
+        })
     }
 
     /**
@@ -84,12 +84,12 @@ impl Board {
             return Err(BoardError::BoardIsTooSmall);
         }
 
-        return Ok(Board {
+        Ok(Board {
             width: mat.get_width(),
-            total: total,
+            total,
             tile_states: vec![TileState::Normal; total],
             tile_values: mat.get_mat(),
-        });
+        })
     }
 
     /// returns the board's width
@@ -146,7 +146,7 @@ impl Board {
             _ => {}
         }
         self.tile_states[id] = new_state;
-        return Ok(());
+        Ok(())
     }
 
     /// Toggle mark a tile

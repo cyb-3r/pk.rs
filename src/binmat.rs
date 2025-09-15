@@ -67,7 +67,7 @@ impl BinMat {
         BinMat {
             width: w,
             height: h,
-            values: values,
+            values,
         }
     }
 

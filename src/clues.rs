@@ -48,7 +48,7 @@ fn clueset_new<'a>(data: impl Iterator<Item = &'a bool>) -> ClueSet {
         clues.push(count);
     }
 
-    if clues.len() == 0 {
+    if clues.is_empty() {
         vec![0]
     } else {
         clues
