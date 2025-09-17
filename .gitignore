@@ -1,3 +1,6 @@
+# package tracking
+Cargo.lock
+
 # build dir
 /target
 
