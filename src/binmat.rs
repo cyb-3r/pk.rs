@@ -15,6 +15,7 @@ causing side effects on the puzzle board or the clues.
 
 *This implementation can change in the future to use bits instead of bools to save memory.*
 */
+#[derive(Debug, Clone)]
 pub struct BinMat {
     /// The number of columns of a matrix
     width: u8,
@@ -116,25 +117,6 @@ impl BinMat {
 
 // file interaction
 impl BinMat {
-    fn from_string(content: String) -> Result<Self, BinMatError> {
-        let (dimensions, data) = content
-            .split_once(':')
-            .ok_or(BinMatError::InvalidFileFormat)?;
-
-        let dims: Vec<u8> = dimensions
-            .split(',')
-            .filter_map(|s| s.parse().ok())
-            .collect();
-
-        match dims.as_slice() {
-            [w, h] => Ok(BinMat::new_internal(
-                *w,
-                *h,
-                data.chars().map(|c| c == '1').collect::<Vec<bool>>(),
-            )),
-            _ => Err(BinMatError::InvalidFileFormat),
-        }
-    }
     /**
     Loads a binary matrix from a file
 
@@ -145,7 +127,7 @@ impl BinMat {
     */
     pub fn from_file(path_str: &str) -> Result<Self, BinMatError> {
         let content = fs::read_to_string(path_str).map_err(|_| BinMatError::FileNotFound)?;
-        Self::from_string(content)
+        Self::try_from(content)
     }
 
     /// Formats a binary matrix to store it into a file
@@ -165,7 +147,37 @@ impl BinMat {
     Writes a binary matrix to a file, creates the file if it doesn't exist
     */
     pub fn to_file(&self, path: &str) -> Result<(), BinMatError> {
-        std::fs::write(path, self.format()).map_err(|_| BinMatError::FileWriteError)
+        std::fs::write(path, String::from(self)).map_err(|_| BinMatError::FileWriteError)
+    }
+}
+
+impl From<&BinMat> for String {
+    fn from(value: &BinMat) -> Self {
+        value.format()
+    }
+}
+
+impl TryFrom<String> for BinMat {
+    type Error = BinMatError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        let (dimensions, data) = value
+            .split_once(':')
+            .ok_or(BinMatError::InvalidFileFormat)?;
+
+        let dims: Vec<u8> = dimensions
+            .split(',')
+            .filter_map(|s| s.parse().ok())
+            .collect();
+
+        match dims.as_slice() {
+            [w, h] => Ok(BinMat::new_internal(
+                *w,
+                *h,
+                data.chars().map(|c| c == '1').collect::<Vec<bool>>(),
+            )),
+            _ => Err(BinMatError::InvalidFileFormat),
+        }
     }
 }
 
@@ -280,19 +292,19 @@ mod tests {
         // do we get the original pattern from loading a mat from that pattern?
         const PATTERN: &str = "3,3:101111000";
         assert_eq!(
-            BinMat::from_string(String::from(PATTERN))
+            BinMat::try_from(String::from(PATTERN))
                 .expect("An error occured")
                 .format(),
             String::from(PATTERN)
         );
 
         // should return an error if format constraint is not satisfied
-        assert!(BinMat::from_string(String::from("huihihihi")).is_err());
+        assert!(BinMat::try_from(String::from("huihihihi")).is_err());
         // pretty funny but should not be done in practice (I hope so)
-        assert!(BinMat::from_string(String::from("0,0:")).is_ok());
+        assert!(BinMat::try_from(String::from("0,0:")).is_ok());
         // does it add missing values?
         assert_eq!(
-            BinMat::from_string(String::from("2,2:011"))
+            BinMat::try_from(String::from("2,2:011"))
                 .expect("oops")
                 .values
                 .len(),
@@ -300,7 +312,7 @@ mod tests {
         );
         // does it truncate excess values?
         assert_eq!(
-            BinMat::from_string(String::from("2,2:01111"))
+            BinMat::try_from(String::from("2,2:01111"))
                 .expect("oops")
                 .values
                 .len(),

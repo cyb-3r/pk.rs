@@ -73,25 +73,6 @@ impl Board {
         })
     }
 
-    /**
-    Returns a new `Board` initialized from a binary matrix
-
-    Returns an error if the matrix is too small.
-    */
-    pub fn from_mat(mat: &BinMat) -> Result<Self, BoardError> {
-        let total: usize = (mat.get_width() * mat.get_height()) as usize;
-        if total < BOARD_MIN {
-            return Err(BoardError::BoardIsTooSmall);
-        }
-
-        Ok(Board {
-            width: mat.get_width(),
-            total,
-            tile_states: vec![TileState::Normal; total],
-            tile_values: mat.get_mat(),
-        })
-    }
-
     /// returns the board's width
     pub fn get_width(&self) -> u8 {
         self.width
@@ -160,6 +141,24 @@ impl Board {
     }
 }
 
+impl TryFrom<&BinMat> for Board {
+    type Error = BoardError;
+
+    fn try_from(value: &BinMat) -> Result<Self, Self::Error> {
+        let total: usize = (value.get_width() * value.get_height()) as usize;
+        if total < BOARD_MIN {
+            return Err(BoardError::BoardIsTooSmall);
+        }
+
+        Ok(Board {
+            width: value.get_width(),
+            total,
+            tile_states: vec![TileState::Normal; total],
+            tile_values: value.get_mat(),
+        })
+    }
+}
+
 mod error {
     #[derive(Debug, PartialEq, Eq)]
     pub enum BoardError {
@@ -209,7 +208,7 @@ mod tests {
         // preparing mat
         mat.toggle_val(0, 0).expect("Not the subject of this test");
 
-        let board = Board::from_mat(&mat);
+        let board = Board::try_from(&mat);
 
         // is it created correctly?
         assert!(board.is_ok());

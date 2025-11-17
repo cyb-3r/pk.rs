@@ -48,11 +48,7 @@ fn clueset_new<'a>(data: impl Iterator<Item = &'a bool>) -> ClueSet {
         clues.push(count);
     }
 
-    if clues.is_empty() {
-        vec![0]
-    } else {
-        clues
-    }
+    if clues.is_empty() { vec![0] } else { clues }
 }
 
 /**
@@ -67,23 +63,6 @@ pub struct PuzzleClues {
 }
 
 impl PuzzleClues {
-    /// Returns clues from from a binary matrix
-    pub fn from_mat(mat: &BinMat) -> Self {
-        let (w, h) = (mat.get_width(), mat.get_height());
-
-        let cs: PuzzleClues = PuzzleClues {
-            row_clues: (0..w)
-                .map(move |row| clueset_new(mat.row_iter(row).unwrap()))
-                .collect(),
-
-            col_clues: (0..h)
-                .map(move |col| clueset_new(mat.col_iter(col).unwrap()))
-                .collect(),
-        };
-
-        cs
-    }
-
     /// Returns a reference to the clues of a row
     pub fn get_row(&self, id: usize) -> Option<&Vec<u8>> {
         self.row_clues.get(id)
@@ -95,6 +74,32 @@ impl PuzzleClues {
     }
 }
 
+impl From<&BinMat> for PuzzleClues {
+    /// Returns clues from from a binary matrix
+    fn from(value: &BinMat) -> Self {
+        let (w, h) = (value.get_width(), value.get_height());
+
+        let cs: PuzzleClues = PuzzleClues {
+            row_clues: (0..w)
+                .map(move |row| clueset_new(value.row_iter(row).unwrap()))
+                .collect(),
+
+            col_clues: (0..h)
+                .map(move |col| clueset_new(value.col_iter(col).unwrap()))
+                .collect(),
+        };
+
+        cs
+    }
+}
+
+impl From<BinMat> for PuzzleClues {
+    /// Returns clues from from a binary matrix
+    fn from(value: BinMat) -> Self {
+        Self::from(&value)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -102,7 +107,7 @@ mod tests {
     #[test]
     fn test_create() {
         const SIZE: u8 = 5;
-        let clues = PuzzleClues::from_mat(&BinMat::new(SIZE, SIZE));
+        let clues = PuzzleClues::from(&BinMat::new(SIZE, SIZE));
 
         assert_eq!(clues.row_clues.len(), SIZE as usize);
         assert_eq!(clues.col_clues.len(), SIZE as usize);
@@ -110,7 +115,7 @@ mod tests {
 
     #[test]
     fn test_clues_accuracy() {
-        let clues = PuzzleClues::from_mat(&{
+        let clues = PuzzleClues::from({
             let mut mat: BinMat = BinMat::new(5, 5);
 
             // preparing mat

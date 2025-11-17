@@ -27,8 +27,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   let mat = binmat::BinMat::from_file("path_to_mat.txt")?;
 
   // create the puzzle's components
-  let board = board::Board::from_mat(&mat)?;
-  let clues = clues::PuzzleClues::from_mat(&mat);
+  let board = board::Board::try_from(&mat)?;
+  let clues = clues::PuzzleClues::from(&mat);
 
   /* then do whatever you want with that */
 
